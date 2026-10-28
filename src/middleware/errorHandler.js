@@ -1,7 +1,7 @@
 function errorHandler(err, req, res, next) {
   console.error(`[ERROR] ${req.method} ${req.path}:`, err.message);
 
-  // Unique constraint reported by the JSON repository
+  // Unique constraint reported by Prisma/PostgreSQL
   if (err.code === 'P2002') {
     return res.status(409).json({
       success: false,

@@ -1,6 +1,6 @@
 const express = require('express');
 const crypto = require('crypto');
-const { PrismaClient } = require('../storage/jsonStore');
+const { PrismaClient } = require('@prisma/client');
 const { requireCustomer } = require('../middleware/auth');
 
 const router = express.Router();
@@ -27,7 +27,7 @@ router.post('/', async (req, res, next) => {
     if (!Array.isArray(items) || items.length < 1 || items.length > 50) return res.status(400).json({ success: false, message: 'An order must contain between 1 and 50 items.' });
     if (!Number.isFinite(fee) || fee < 0 || fee > 10000000) return res.status(400).json({ success: false, message: 'Invalid delivery fee.' });
     const method = String(paymentMethod).toUpperCase();
-    if (!['CASH_ON_DELIVERY', 'MTN_MOMO'].includes(method)) return res.status(400).json({ success: false, message: 'Unsupported payment method.' });
+    if (!['CASH_ON_DELIVERY', 'MTN_MOMO_MANUAL'].includes(method)) return res.status(400).json({ success: false, message: 'Unsupported payment method.' });
 
     const quantities = new Map();
     for (const item of items) {

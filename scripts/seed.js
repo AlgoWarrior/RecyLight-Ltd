@@ -1,6 +1,6 @@
-/** Create default categories and the initial administrator in JSON storage. */
+/** Create default categories and the initial administrator in Supabase PostgreSQL. */
 require('dotenv').config();
-const { PrismaClient, Role } = require('../src/storage/jsonStore');
+const { PrismaClient, Role } = require('@prisma/client');
 const { hashPassword } = require('../src/utils/password');
 const prisma = new PrismaClient();
 

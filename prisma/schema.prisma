@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+model User {
+  id             String              @id @default(uuid()) @db.Uuid
+  name           String
+  email          String              @unique
+  phone          String?
+  passwordHash   String
+  role           Role                @default(CUSTOMER)
+  isActive       Boolean             @default(true)
+  emailVerifiedAt DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  passwordResetTokens PasswordResetToken[]
+  orders         Order[]
+  @@map("users")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model Category {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @unique
+  slug        String    @unique
+  description String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+  @@map("categories")
+}
+
+model Product {
+  id             String              @id @default(uuid()) @db.Uuid
+  sku            String?             @unique
+  name           String
+  slug           String              @unique
+  description    String              @default("")
+  brand          String?
+  price          Float
+  discountPrice  Float?
+  stockQuantity  Int                 @default(0)
+  status         String              @default("DRAFT")
+  isFeatured     Boolean             @default(false)
+  categoryId     String?             @db.Uuid
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  category       Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  images         ProductImage[]
+  orderItems     OrderItem[]
+  inventoryMovements InventoryMovement[]
+  @@index([status, createdAt])
+  @@index([categoryId])
+  @@map("products")
+}
+
+model ProductImage {
+  id        String   @id @default(uuid()) @db.Uuid
+  productId String   @db.Uuid
+  url       String
+  sortOrder Int      @default(0)
+  altText   String?
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  @@index([productId, sortOrder])
+  @@map("product_images")
+}
+
+model Order {
+  id               String               @id @default(uuid()) @db.Uuid
+  orderNumber      String               @unique
+  customerId       String?              @db.Uuid
+  customerName     String
+  phone            String
+  email            String?
+  deliveryLocation String
+  notes            String?
+  subtotal         Float
+  deliveryFee      Float                @default(0)
+  total            Float
+  currency         String               @default("RWF")
+  status           String               @default("PENDING")
+  paymentStatus    String               @default("UNPAID")
+  paymentMethod    String               @default("CASH_ON_DELIVERY")
+  idempotencyKey   String?              @unique
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  customer         User?                @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  items            OrderItem[]
+  payments         PaymentTransaction[]
+  inventoryMovements InventoryMovement[]
+  @@index([customerId, createdAt])
+  @@index([paymentStatus, createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  orderId     String   @db.Uuid
+  productId   String?  @db.Uuid
+  productName String
+  sku         String?
+  quantity    Int
+  unitPrice   Float
+  lineTotal   Float
+  createdAt   DateTime @default(now())
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model PaymentTransaction {
+  id             String   @id @default(uuid()) @db.Uuid
+  orderId        String   @db.Uuid
+  provider       String
+  providerReference String @unique
+  externalReference String?
+  transactionReference String? @unique
+  amount         Float
+  currency       String   @default("RWF")
+  status         String   @default("PENDING")
+  payerPhone     String?
+  providerMessage String?
+  verifiedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  @@index([orderId, createdAt])
+  @@index([status, provider])
+  @@map("payment_transactions")
+}
+
+model InventoryMovement {
+  id           String   @id @default(uuid()) @db.Uuid
+  productId    String   @db.Uuid
+  orderId      String?  @db.Uuid
+  movementType String
+  quantity     Int
+  note         String?
+  createdAt    DateTime @default(now())
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  order        Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  @@index([productId, createdAt])
+  @@index([orderId])
+  @@map("inventory_movements")
+}

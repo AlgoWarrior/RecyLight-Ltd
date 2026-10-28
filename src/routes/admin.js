@@ -1,5 +1,5 @@
 const express = require('express');
-const { PrismaClient } = require('../storage/jsonStore');
+const { PrismaClient } = require('@prisma/client');
 const { requireAdmin } = require('../middleware/auth');
 const { ORDER_STATUSES } = require('./orders');
 

@@ -1,4 +1,4 @@
-const { PrismaClient, Role } = require('../storage/jsonStore');
+const { PrismaClient, Role } = require('@prisma/client');
 const { verifyPassword } = require('../utils/password');
 const { normalizeEmail } = require('../utils/validators');
 const config = require('../config');
