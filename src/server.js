@@ -16,6 +16,9 @@ const paymentsRoutes = require('./routes/payments');
 
 const app = express();
 
+// Render terminates TLS at its proxy; trust it so secure session cookies work.
+app.set('trust proxy', 1);
+
 // Security headers
 app.use(helmet({
   contentSecurityPolicy: false, // adjust for your frontend
@@ -46,7 +49,7 @@ app.use(
     cookie: {
       httpOnly: true,
       secure: config.env === 'production',
-      sameSite: config.env === 'production' ? 'strict' : 'lax',
+      sameSite: config.env === 'production' ? 'none' : 'lax',
       maxAge: config.session.maxAge,
       path: '/',
     },
