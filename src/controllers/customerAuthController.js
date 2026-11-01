@@ -10,6 +10,23 @@ const config = require('../config');
 
 const prisma = new PrismaClient();
 
+function logAuthError(action, err) {
+  // Keep useful diagnostics in Render logs without exposing request data or secrets.
+  console.error(`[${action}]`, {
+    name: err?.name || 'Error',
+    code: err?.code || null,
+    clientVersion: err?.clientVersion || null,
+    message: String(err?.message || 'Unknown error')
+      .replace(/postgres(?:ql)?:\/\/[^\s]+/gi, '[DATABASE_URL REDACTED]')
+      .replace(/(password|token|secret)=([^&\s]+)/gi, '$1=[REDACTED]'),
+    meta: err?.meta ? {
+      code: err.meta.code || null,
+      modelName: err.meta.modelName || null,
+      target: err.meta.target || null,
+    } : null,
+  });
+}
+
 /**
  * POST /api/v1/auth/customer/signup
  * Always assigns CUSTOMER role on the server. Never accepts role from client.
@@ -61,7 +78,7 @@ async function signup(req, res) {
       data: { user },
     });
   } catch (err) {
-    console.error('[customer.signup]', err);
+    logAuthError('customer.signup', err);
     return res.status(500).json({
       success: false,
       message: 'Registration failed',
@@ -108,7 +125,7 @@ async function login(req, res) {
     // Regenerate session to prevent fixation
     req.session.regenerate((err) => {
       if (err) {
-        console.error('[customer.login] session regenerate', err);
+        logAuthError('customer.login.session', err);
         return res.status(500).json({ success: false, message: 'Login failed' });
       }
 
@@ -130,7 +147,7 @@ async function login(req, res) {
       });
     });
   } catch (err) {
-    console.error('[customer.login]', err);
+    logAuthError('customer.login', err);
     return res.status(500).json({
       success: false,
       message: 'Login failed',
