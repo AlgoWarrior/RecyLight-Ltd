@@ -3,7 +3,7 @@ require('dotenv').config();
 const config = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT || '5000', 10),
-  frontendOrigin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+  frontendOrigin: (process.env.FRONTEND_ORIGIN || 'http://localhost:5173').trim().replace(/\/$/, ''),
   session: {
     secret: process.env.SESSION_SECRET || 'dev-only-insecure-secret-change-me',
     cookieName: process.env.SESSION_COOKIE_NAME || 'recylight.sid',
